@@ -1,3 +1,8 @@
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+import matplotlib
+matplotlib.use('Agg')
 import os
 from dotenv import load_dotenv
 import telebot
@@ -257,7 +262,7 @@ def process_add_product(message):
                 message.chat.id,
                 f"✅ '{name}' ({kcal} ккал/100г) добавлен!",
                 reply_markup=create_keyboard()
-        )
+            )
     except Exception as e:
         error_markup = create_keyboard()
         error_markup.add("➕ Добавить продукт")
@@ -270,28 +275,44 @@ def process_add_product(message):
 def webhook():
     if request.method == "POST":
         try:
-            json_data = request.get_data().decode('utf-8')
-            update = telebot.types.Update.de_json(json.loads(json_data))
+            # Логирование сырых данных
+            raw_data = request.get_data().decode('utf-8')
+            print(f"Raw request data: {raw_data}")
+
+            # Парсинг JSON
+            json_data = json.loads(raw_data)
+            print(f"Parsed JSON: {json_data}")
+
+            # Создаем Update объект
+            update = telebot.types.Update.de_json(json_data)
+            print(f"Telegram Update: {update}")
+
+            # Обрабатываем update
             bot.process_new_updates([update])
             return 'OK', 200
+
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {e}")
+            return 'Invalid JSON', 400
         except Exception as e:
-            print(f"Webhook error: {e}")
-            return 'Error', 400
-    return 'Method not allowed', 405
+            print(f"Unexpected error: {e}")
+            return 'Server Error', 500
 @app.route('/')
 def home():
     return "Бот работает! Для проверки отправьте /start в Telegram"
 
 if __name__ == '__main__':
-    print("Устанавливаем вебхук...")
+    print("Запуск бота...")
     bot.remove_webhook()
     time.sleep(1)
+    
+    webhook_url = 'https://telegram-bot-render-h7b5.onrender.com/webhook'
+    print(f"Устанавливаем вебхук на: {webhook_url}")
+    
     try:
-        bot.set_webhook(
-            url='https://telegram-bot-render-h7b5.onrender.com/webhook'
-        )
-        print("Вебхук установлен!")
+        bot.set_webhook(url=webhook_url)
+        print("Вебхук успешно установлен!")
     except Exception as e:
-        print(f"Ошибка вебхука: {e}")
+        print(f"Ошибка установки вебхука: {e}")
     
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 10000)))
