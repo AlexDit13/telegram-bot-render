@@ -274,29 +274,9 @@ def process_add_product(message):
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if request.method == "POST":
-        try:
-            # Логирование сырых данных
-            raw_data = request.get_data().decode('utf-8')
-            print(f"Raw request data: {raw_data}")
-
-            # Парсинг JSON
-            json_data = json.loads(raw_data)
-            print(f"Parsed JSON: {json_data}")
-
-            # Создаем Update объект
-            update = telebot.types.Update.de_json(json_data)
-            print(f"Telegram Update: {update}")
-
-            # Обрабатываем update
-            bot.process_new_updates([update])
-            return 'OK', 200
-
-        except json.JSONDecodeError as e:
-            print(f"JSON decode error: {e}")
-            return 'Invalid JSON', 400
-        except Exception as e:
-            print(f"Unexpected error: {e}")
-            return 'Server Error', 500
+        update = telebot.types.Update.de_json(request.stream.read().decode('urf-8'))
+        bot.process_new_updates([update])
+    return "ok", 200
 @app.route('/')
 def home():
     return "Бот работает! Для проверки отправьте /start в Telegram"
@@ -307,6 +287,9 @@ if __name__ == '__main__':
     time.sleep(1)
     
     webhook_url = 'https://telegram-bot-render-h7b5.onrender.com/webhook'
+    bot.set_webhook(url=webhook_url)
+    webhook_info = bot.get_webhook_info()
+    print(f"webhook info: {webhook_info}")
     print(f"Устанавливаем вебхук на: {webhook_url}")
     
     try:
