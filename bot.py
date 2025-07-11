@@ -498,7 +498,7 @@ def home():
 
 def setup_webhook():
     """Настройка вебхука с повторами при ошибках"""
-    webhook_url = 'https://your-render-url.onrender.com/webhook'
+    webhook_url = 'https://telegram-bot-render-h7b5.onrender.com/webhook'
     max_retries = 3
     retry_delay = 5
     
