@@ -274,7 +274,7 @@ def process_add_product(message):
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if request.method == "POST":
-        update = telebot.types.Update.de_json(request.stream.read().decode('urf-8'))
+        update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
         bot.process_new_updates([update])
     return "ok", 200
 @app.route('/')
