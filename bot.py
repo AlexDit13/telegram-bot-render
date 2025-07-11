@@ -155,7 +155,7 @@ def create_keyboard():
     return markup
 
 # ==================== ОБРАБОТЧИКИ СООБЩЕНИЙ ====================
-@bot.message_handler(commands=['start', 'help', 'меню', 'главное меню'])
+@bot.message_handler(commands=['start', 'help', 'меню', '🏠 Главное меню'])
 def start(message):
     """Обработчик стартового сообщения"""
     try:
@@ -313,7 +313,16 @@ def add_new_product(message):
     except Exception as e:
         logger.error(f"Ошибка в add_new_product: {e}")
         bot.send_message(message.chat.id, "⚠️ Ошибка добавления продукта", reply_markup=create_keyboard())
-
+@bot.message_handler(func=lambda m: m.text == "🏠 Главное меню")
+def main_menu(message):
+    try:
+        bot.send_message(
+            message.chat.id,
+            "Возвращаемся в главное меню:",
+            reply_markup=create_keyboard()
+        )
+    except Exception as e:
+        logger.error(f"Error in main_menu: {e}")
 def process_add_product(message):
     """Обработка добавления нового продукта"""
     try:
@@ -483,12 +492,14 @@ def webhook():
         try:
             json_data = request.get_json()
             logger.info(f"Received update: {json_data}")
-            
+            if not json_data:
+                logger.error("Empty update received")
+                return "empty update", 400
             update = telebot.types.Update.de_json(json_data)
             bot.process_new_updates([update])
             return "ok", 200
         except Exception as e:
-            logger.error(f"Webhook error: {e}")
+            logger.error(f"Webhook error: {str(e)}")
             return "error", 500
 
 @app.route('/')
@@ -518,7 +529,15 @@ def setup_webhook():
 
 if __name__ == '__main__':
     logger.info("Запуск бота...")
-    
+    bot.remove_webhook()
+    time.sleep(1)
+    webhook_url = 'https://telegram-bot-render-h7b5.onrender.com/webhook'
+    try:
+        bot.set_webhook(url=webhook_url)
+        logger.info(f"Webhook set to: {webhook_url}")
+        logger.info(f"Current webhook info: {bot.get_webhook_info()}")
+    except Exception as e:
+        logger.error(f"Failed to set webhook: {e}")
     if setup_webhook():
         port = int(os.getenv('PORT', 10000))
         logger.info(f"Сервер запущен на порту {port}")
